@@ -218,7 +218,7 @@ function pickByAlias(row, aliases) {
 function populateFilters(rows) {
   fillSelect(el.levelFilter, uniqueValues(rows.map((r) => r.level)));
   fillSelect(el.topicFilter, uniqueValues(rows.map((r) => r.topic)));
-  fillSelect(el.professorFilter, uniqueValues(rows.map((r) => r.professor)));
+  fillSelect(el.professorFilter, uniqueValues(rows.flatMap((r) => splitProfessors(r.professor))));
   fillSelect(el.experimentFilter, uniqueValues(rows.map((r) => r.experiment)));
 }
 
@@ -251,7 +251,8 @@ function applyFilters() {
         .includes(query);
 
     const matchesTopic = !selectedTopic || row.topic === selectedTopic;
-    const matchesProfessor = !selectedProfessor || row.professor === selectedProfessor;
+    const matchesProfessor =
+      !selectedProfessor || splitProfessors(row.professor).includes(selectedProfessor);
     const matchesExperiment = !selectedExperiment || row.experiment === selectedExperiment;
     const matchesLevel = !selectedLevel || row.level === selectedLevel;
 
@@ -267,6 +268,14 @@ function applyFilters() {
   }
 
   el.resultsCount.textContent = `${state.filteredRows.length} risultat${state.filteredRows.length === 1 ? "o" : "i"}`;
+}
+
+function splitProfessors(value) {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function renderList() {
