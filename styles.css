@@ -1,0 +1,300 @@
+:root {
+  --bg: #f6f5ef;
+  --panel: rgba(255, 255, 255, 0.8);
+  --ink: #13272f;
+  --muted: #4e676f;
+  --line: rgba(19, 39, 47, 0.15);
+  --accent: #de5f2a;
+  --accent-soft: rgba(222, 95, 42, 0.18);
+  --ok: #1f7a5b;
+  --shadow: 0 18px 45px rgba(19, 39, 47, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 10% 10%, #fcf4d8 0%, transparent 45%),
+    radial-gradient(circle at 90% 15%, #d5ece8 0%, transparent 40%),
+    linear-gradient(140deg, #f7f5f0 0%, #eef6f4 100%);
+  min-height: 100%;
+}
+
+.bg-orb {
+  position: fixed;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(40px);
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.orb-a {
+  width: 240px;
+  height: 240px;
+  top: 12vh;
+  left: -70px;
+  background: #ffd6bf;
+}
+
+.orb-b {
+  width: 280px;
+  height: 280px;
+  bottom: 5vh;
+  right: -80px;
+  background: #bde4dd;
+}
+
+.site-header,
+.layout {
+  position: relative;
+  z-index: 1;
+}
+
+.site-header {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.2rem 1.2rem 1rem;
+  animation: fade-up 400ms ease;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  font-family: "IBM Plex Serif", serif;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+}
+
+.layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 1.2rem 2rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 290px minmax(340px, 1fr) minmax(320px, 0.9fr);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+  min-height: 220px;
+}
+
+.controls-panel {
+  padding: 1rem;
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+}
+
+.controls-panel h2 {
+  margin: 0 0 0.9rem;
+  font-size: 1.1rem;
+}
+
+label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 0.75rem;
+  display: block;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  margin-top: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  font: inherit;
+}
+
+input,
+select {
+  padding: 0.62rem 0.7rem;
+  background: #fff;
+}
+
+button {
+  padding: 0.62rem 0.9rem;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.actions-row {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+#resultsCount {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.list-panel {
+  padding: 1rem;
+}
+
+.status {
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+}
+
+.thesis-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.thesis-item {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease;
+  animation: fade-up 240ms ease;
+}
+
+.thesis-item:hover,
+.thesis-item.active {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.thesis-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.thesis-meta {
+  margin-top: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.17rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  border: 1px solid var(--line);
+  background: #f9faf9;
+}
+
+.badge.highlight {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: #7d351b;
+}
+
+.detail-panel {
+  padding: 1.05rem;
+}
+
+.detail-empty {
+  color: var(--muted);
+}
+
+.detail.hidden {
+  display: none;
+}
+
+.detail h2 {
+  margin: 0;
+  font-family: "IBM Plex Serif", serif;
+  font-size: 1.5rem;
+}
+
+.detail-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.detail-row strong {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.15rem;
+}
+
+.detail-row p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.link-btn {
+  margin-top: 1rem;
+  display: inline-block;
+  text-decoration: none;
+  background: var(--ok);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.58rem 0.95rem;
+  font-weight: 600;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel {
+    position: static;
+  }
+}
