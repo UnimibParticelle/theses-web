@@ -8,6 +8,7 @@ const columnAliases = {
   title: ["titolo", "title", "argomento"],
   professor: ["docente", "relatore", "supervisor", "professor"],
   topic: ["area", "topic", "settore", "categoria", "ambito"],
+  experiment: ["esperimetno", "experiment"],
   language: ["lingua", "language"],
   description: ["descrizione", "description", "abstract", "sommario"],
   requirements: ["requisiti", "requirements", "prerequisiti"],
