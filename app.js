@@ -6,10 +6,11 @@ const state = {
 
 const columnAliases = {
   title: ["titolo", "title", "argomento"],
-  professor: ["docente", "relatore", "supervisor", "professor"],
+  professor: ["docente", "relatore", "supervisor", "professor", "referenti"],
   topic: ["area", "topic", "settore", "categoria", "ambito"],
-  experiment: ["esperimetno", "experiment"],
+  experiment: ["esperimento", "experiment"],
   language: ["lingua", "language"],
+  level: ["livello", "level"],
   description: ["descrizione", "description", "abstract", "sommario"],
   requirements: ["requisiti", "requirements", "prerequisiti"],
   email: ["email", "mail", "contatto"],
@@ -23,8 +24,9 @@ const el = {
   thesisDetail: document.getElementById("thesisDetail"),
   searchInput: document.getElementById("searchInput"),
   topicFilter: document.getElementById("topicFilter"),
+  levelFilter: document.getElementById("levelFilter"),
   professorFilter: document.getElementById("professorFilter"),
-  languageFilter: document.getElementById("languageFilter"),
+  experimentFilter: document.getElementById("experimentFilter"),
   clearFiltersBtn: document.getElementById("clearFiltersBtn"),
   resultsCount: document.getElementById("resultsCount")
 };
@@ -75,15 +77,17 @@ async function init() {
 
 function bindEvents() {
   el.searchInput.addEventListener("input", applyFilters);
+  el.levelFilter.addEventListener("change", applyFilters);
   el.topicFilter.addEventListener("change", applyFilters);
   el.professorFilter.addEventListener("change", applyFilters);
-  el.languageFilter.addEventListener("change", applyFilters);
+  el.experimentFilter.addEventListener("change", applyFilters);
 
   el.clearFiltersBtn.addEventListener("click", () => {
     el.searchInput.value = "";
+    el.levelFilter.value = "";
     el.topicFilter.value = "";
     el.professorFilter.value = "";
-    el.languageFilter.value = "";
+    el.experimentFilter.value = "";
     applyFilters();
   });
 
@@ -177,6 +181,8 @@ function normalizeRows(rows) {
       professor: pickByAlias(row, columnAliases.professor),
       topic: pickByAlias(row, columnAliases.topic),
       language: pickByAlias(row, columnAliases.language),
+      experiment: pickByAlias(row, columnAliases.experiment),
+      level: pickByAlias(row, columnAliases.level),
       description: pickByAlias(row, columnAliases.description),
       requirements: pickByAlias(row, columnAliases.requirements),
       email: pickByAlias(row, columnAliases.email),
@@ -210,9 +216,10 @@ function pickByAlias(row, aliases) {
 }
 
 function populateFilters(rows) {
+  fillSelect(el.levelFilter, uniqueValues(rows.map((r) => r.level)));
   fillSelect(el.topicFilter, uniqueValues(rows.map((r) => r.topic)));
   fillSelect(el.professorFilter, uniqueValues(rows.map((r) => r.professor)));
-  fillSelect(el.languageFilter, uniqueValues(rows.map((r) => r.language)));
+  fillSelect(el.experimentFilter, uniqueValues(rows.map((r) => r.experiment)));
 }
 
 function fillSelect(select, values) {
@@ -230,9 +237,10 @@ function uniqueValues(values) {
 
 function applyFilters() {
   const query = el.searchInput.value.trim().toLowerCase();
+  const selectedLevel = el.levelFilter.value;
   const selectedTopic = el.topicFilter.value;
   const selectedProfessor = el.professorFilter.value;
-  const selectedLanguage = el.languageFilter.value;
+  const selectedExperiment = el.experimentFilter.value;
 
   state.filteredRows = state.allRows.filter((row) => {
     const matchesQuery =
@@ -244,9 +252,10 @@ function applyFilters() {
 
     const matchesTopic = !selectedTopic || row.topic === selectedTopic;
     const matchesProfessor = !selectedProfessor || row.professor === selectedProfessor;
-    const matchesLanguage = !selectedLanguage || row.language === selectedLanguage;
+    const matchesExperiment = !selectedExperiment || row.experiment === selectedExperiment;
+    const matchesLevel = !selectedLevel || row.level === selectedLevel;
 
-    return matchesQuery && matchesTopic && matchesProfessor && matchesLanguage;
+    return matchesQuery && matchesTopic && matchesProfessor && matchesExperiment && matchesLevel;
   });
 
   renderList();
@@ -277,9 +286,10 @@ function renderList() {
     item.dataset.id = row.id;
 
     const metaChunks = [];
+    if (row.level) metaChunks.push(`<span class="badge">${escapeHtml(row.level)}</span>`);
     if (row.professor) metaChunks.push(`<span class="badge">${escapeHtml(row.professor)}</span>`);
     if (row.topic) metaChunks.push(`<span class="badge highlight">${escapeHtml(row.topic)}</span>`);
-    if (row.language) metaChunks.push(`<span class="badge">${escapeHtml(row.language)}</span>`);
+    if (row.experiment) metaChunks.push(`<span class="badge">${escapeHtml(row.experiment)}</span>`);
 
     item.innerHTML = `
       <p class="thesis-title">${escapeHtml(row.title)}</p>
@@ -316,7 +326,7 @@ function selectThesis(id) {
   const detailRows = [
     detailRow("Docente", selected.professor),
     detailRow("Area", selected.topic),
-    detailRow("Lingua", selected.language),
+    detailRow("Esperimento", selected.experiment),
     detailRow("Requisiti", selected.requirements),
     detailRow("Contatto", selected.email),
     detailRow("Descrizione", selected.description)
