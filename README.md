@@ -38,6 +38,26 @@ window.SHEETS_CONFIG = {
 };
 ```
 
+### Foglio esperimenti opzionale
+
+Puoi aggiungere un secondo foglio (sempre pubblicato in CSV) per mostrare nel dettaglio tesi la descrizione del relativo esperimento.
+
+Configura anche `experimentsCsvUrl` in [config.js](config.js):
+
+```js
+window.SHEETS_CONFIG = {
+	csvUrl: "https://docs.google.com/spreadsheets/d/e/XXXXXXXXXXXX/pub?gid=0&single=true&output=csv",
+	experimentsCsvUrl: "https://docs.google.com/spreadsheets/d/e/XXXXXXXXXXXX/pub?gid=123456789&single=true&output=csv"
+};
+```
+
+Nel foglio esperimenti usa intestazioni consigliate:
+
+- `esperimento` (oppure `experiment`, `nome`, `name`, `sigla`)
+- `descrizione` (oppure `description`, `dettagli`, `details`)
+
+Il match tra tesi ed esperimenti e case-insensitive e ignora gli accenti.
+
 ## 3) Anteprima locale
 
 Puoi usare qualsiasi server statico. Esempio con Python:

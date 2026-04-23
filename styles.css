@@ -267,6 +267,26 @@ button:hover {
   line-height: 1.4;
 }
 
+.detail-disclosure {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.15rem 0.75rem 0.65rem;
+}
+
+.detail-disclosure summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  padding-top: 0.45rem;
+}
+
+.detail-disclosure-content {
+  margin-top: 0.7rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
 .link-btn {
   margin-top: 1rem;
   display: inline-block;

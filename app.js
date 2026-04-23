@@ -1,7 +1,8 @@
 const state = {
   allRows: [],
   filteredRows: [],
-  selectedId: null
+  selectedId: null,
+  experimentDescriptions: new Map()
 };
 
 const columnAliases = {
@@ -15,6 +16,11 @@ const columnAliases = {
   requirements: ["requisiti", "requirements", "prerequisiti"],
   email: ["email", "mail", "contatto"],
   link: ["link", "url", "modulo", "form", "application"]
+};
+
+const experimentSheetAliases = {
+  name: ["esperimento", "experiment", "nome", "name", "sigla", "acronimo"],
+  description: ["descrizione", "description", "dettagli", "details", "info"]
 };
 
 const el = {
@@ -49,6 +55,16 @@ async function init() {
     const csv = await fetchCsv(window.SHEETS_CONFIG.csvUrl);
     const parsed = parseCsv(csv);
     state.allRows = normalizeRows(parsed);
+
+    if (window.SHEETS_CONFIG.experimentsCsvUrl) {
+      try {
+        const experimentsCsv = await fetchCsv(window.SHEETS_CONFIG.experimentsCsvUrl);
+        const experimentsParsed = parseCsv(experimentsCsv);
+        state.experimentDescriptions = buildExperimentDescriptionMap(experimentsParsed);
+      } catch (experimentError) {
+        console.warn("Impossibile caricare il foglio descrizioni esperimenti:", experimentError);
+      }
+    }
 
     if (state.allRows.length === 0) {
       setStatus("Nessuna proposta trovata nel foglio.", true);
@@ -271,11 +287,7 @@ function applyFilters() {
 }
 
 function splitProfessors(value) {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return splitCommaValues(value);
 }
 
 function renderList() {
@@ -336,9 +348,14 @@ function selectThesis(id) {
     detailRow("Docente", selected.professor),
     detailRow("Area", selected.topic),
     detailRow("Esperimento", selected.experiment),
+    detailRow("Descrizione", selected.description, { linkify: true }),
     detailRow("Requisiti", selected.requirements),
-    detailRow("Contatto", selected.email),
-    detailRow("Descrizione", selected.description, { linkify: true })
+    detailDisclosureRow(
+      "Descrizione esperimento",
+      findExperimentDescription(selected.experiment),
+      "Apri dettagli esperimento"
+    ),
+    detailRow("Contatto", selected.email)
   ]
     .filter(Boolean)
     .join("");
@@ -363,6 +380,19 @@ function detailRow(label, value, options = {}) {
     <div class="detail-row">
       <strong>${escapeHtml(label)}</strong>
       <p>${renderedValue}</p>
+    </div>
+  `;
+}
+
+function detailDisclosureRow(label, value, summaryLabel) {
+  if (!value) return "";
+  return `
+    <div class="detail-row detail-row-disclosure">
+      <strong>${escapeHtml(label)}</strong>
+      <details class="detail-disclosure">
+        <summary>${escapeHtml(summaryLabel)}</summary>
+        <div class="detail-disclosure-content">${renderTextWithLinks(value)}</div>
+      </details>
     </div>
   `;
 }
@@ -403,6 +433,62 @@ function renderTextWithLinks(text) {
   });
 
   return rendered;
+}
+
+function buildExperimentDescriptionMap(rows) {
+  const descriptions = new Map();
+
+  rows.forEach((row) => {
+    const name = pickByAlias(row, experimentSheetAliases.name);
+    const description = pickByAlias(row, experimentSheetAliases.description);
+    if (!name || !description) return;
+
+    const key = normalizeLookupKey(name);
+    const existing = descriptions.get(key);
+
+    if (!existing) {
+      descriptions.set(key, description);
+      return;
+    }
+
+    if (!existing.includes(description)) {
+      descriptions.set(key, `${existing}\n\n${description}`);
+    }
+  });
+
+  return descriptions;
+}
+
+function findExperimentDescription(experimentValue) {
+  if (!experimentValue || state.experimentDescriptions.size === 0) return "";
+
+  const matches = splitCommaValues(experimentValue)
+    .map((name) => ({
+      name,
+      description: state.experimentDescriptions.get(normalizeLookupKey(name))
+    }))
+    .filter((item) => item.description);
+
+  if (matches.length === 0) return "";
+  if (matches.length === 1) return matches[0].description;
+
+  return matches.map((item) => `${item.name}: ${item.description}`).join("\n\n");
+}
+
+function normalizeLookupKey(value) {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function splitCommaValues(value) {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function highlightSelection() {
