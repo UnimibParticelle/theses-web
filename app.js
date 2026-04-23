@@ -338,7 +338,7 @@ function selectThesis(id) {
     detailRow("Esperimento", selected.experiment),
     detailRow("Requisiti", selected.requirements),
     detailRow("Contatto", selected.email),
-    detailRow("Descrizione", selected.description)
+    detailRow("Descrizione", selected.description, { linkify: true })
   ]
     .filter(Boolean)
     .join("");
@@ -356,14 +356,53 @@ function selectThesis(id) {
   highlightSelection();
 }
 
-function detailRow(label, value) {
+function detailRow(label, value, options = {}) {
   if (!value) return "";
+  const renderedValue = options.linkify ? renderTextWithLinks(value) : escapeHtml(value);
   return `
     <div class="detail-row">
       <strong>${escapeHtml(label)}</strong>
-      <p>${escapeHtml(value)}</p>
+      <p>${renderedValue}</p>
     </div>
   `;
+}
+
+function renderTextWithLinks(text) {
+  const markdownLinks = [];
+  const markdownRegex = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|www\.[^\s)]+)\)/gi;
+
+  const withPlaceholders = String(text).replace(markdownRegex, (_, label, rawUrl) => {
+    const href = rawUrl.startsWith("www.") ? `https://${rawUrl}` : rawUrl;
+    const anchor = `<a href="${escapeAttr(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`;
+    const token = `__MD_LINK_${markdownLinks.length}__`;
+    markdownLinks.push({ token, anchor });
+    return token;
+  });
+
+  let rendered = escapeHtml(withPlaceholders).replace(/\n/g, "<br>");
+  const urlRegex = /\b(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+
+  rendered = rendered.replace(urlRegex, (match) => {
+    const trailingPunctuation = /[.,;:!?)]$/;
+    let clean = match;
+    let trailing = "";
+
+    while (trailingPunctuation.test(clean)) {
+      trailing = clean.slice(-1) + trailing;
+      clean = clean.slice(0, -1);
+    }
+
+    if (!clean) return match;
+
+    const href = clean.startsWith("www.") ? `https://${clean}` : clean;
+    return `<a href="${href}" target="_blank" rel="noreferrer">${clean}</a>${trailing}`;
+  });
+
+  markdownLinks.forEach(({ token, anchor }) => {
+    rendered = rendered.replace(token, anchor);
+  });
+
+  return rendered;
 }
 
 function highlightSelection() {
