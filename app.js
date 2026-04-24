@@ -5,6 +5,14 @@ const state = {
   experimentDescriptions: new Map()
 };
 
+const urlFilterParamAliases = {
+  level: ["level", "livello"],
+  topic: ["topic", "argomento", "area"],
+  professor: ["professor", "docente", "relatore"],
+  experiment: ["experiment", "esperimento"],
+  query: ["q", "query", "search", "cerca"]
+};
+
 const columnAliases = {
   title: ["titolo", "title", "argomento"],
   professor: ["docente", "relatore", "supervisor", "professor", "referenti"],
@@ -72,6 +80,7 @@ async function init() {
     }
 
     populateFilters(state.allRows);
+    applyFiltersFromUrl();
     applyFilters();
 
     const hashId = window.location.hash.replace("#", "").trim();
@@ -265,6 +274,61 @@ function setSelectOptions(select, values) {
   fillSelect(select, values);
 }
 
+function getFirstQueryParam(params, aliases) {
+  for (const alias of aliases) {
+    const value = params.get(alias);
+    if (value) return value;
+  }
+  return "";
+}
+
+function normalizeText(value) {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function fuzzyMatchValue(raw, availableValues) {
+  if (!raw) return "";
+  const needle = normalizeText(raw);
+  return availableValues.find((v) => normalizeText(v) === needle) || "";
+}
+
+function applyFiltersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+
+  const allLevels      = uniqueValues(state.allRows.map((r) => r.level));
+  const allTopics      = uniqueValues(state.allRows.map((r) => r.topic));
+  const allProfessors  = uniqueValues(state.allRows.flatMap((r) => splitProfessors(r.professor)));
+  const allExperiments = uniqueValues(state.allRows.map((r) => r.experiment));
+
+  el.searchInput.value    = getFirstQueryParam(params, urlFilterParamAliases.query);
+  el.levelFilter.value      = fuzzyMatchValue(getFirstQueryParam(params, urlFilterParamAliases.level),      allLevels);
+  el.topicFilter.value      = fuzzyMatchValue(getFirstQueryParam(params, urlFilterParamAliases.topic),      allTopics);
+  el.professorFilter.value  = fuzzyMatchValue(getFirstQueryParam(params, urlFilterParamAliases.professor),  allProfessors);
+  el.experimentFilter.value = fuzzyMatchValue(getFirstQueryParam(params, urlFilterParamAliases.experiment), allExperiments);
+}
+
+function syncUrlWithFilters(query, filters) {
+  const params = new URLSearchParams();
+
+  if (query) params.set("q", query);
+  if (filters.level) params.set("level", filters.level);
+  if (filters.topic) params.set("topic", filters.topic);
+  if (filters.professor) params.set("professor", filters.professor);
+  if (filters.experiment) params.set("experiment", filters.experiment);
+
+  const queryString = params.toString();
+  const target = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash}`;
+  try {
+    window.history.replaceState(null, "", target);
+  } catch (_) {
+    // replaceState is unavailable in some environments (e.g. file:// origin)
+  }
+}
+
 function rowMatchesQuery(row, query) {
   if (!query) return true;
   return [row.title, row.professor, row.topic, row.description, row.requirements]
@@ -275,10 +339,11 @@ function rowMatchesQuery(row, query) {
 
 function matchesFilterValue(row, key, value) {
   if (!value) return true;
+  const needle = normalizeText(value);
   if (key === "professor") {
-    return splitProfessors(row.professor).includes(value);
+    return splitProfessors(row.professor).some((p) => normalizeText(p) === needle);
   }
-  return row[key] === value;
+  return normalizeText(row[key]) === needle;
 }
 
 function syncFilterOptions(query, selectedFilters) {
@@ -318,11 +383,10 @@ function syncFilterOptions(query, selectedFilters) {
     const availableValues = valuesFromRows(compatibleRows);
     setSelectOptions(select, availableValues);
 
-    if (selectedFilters[key] && availableValues.includes(selectedFilters[key])) {
-      select.value = selectedFilters[key];
-    } else {
-      select.value = "";
-    }
+    const matched = selectedFilters[key]
+      ? fuzzyMatchValue(selectedFilters[key], availableValues)
+      : "";
+    select.value = matched;
   });
 
   return {
@@ -341,6 +405,8 @@ function applyFilters() {
     professor: el.professorFilter.value,
     experiment: el.experimentFilter.value
   });
+
+  syncUrlWithFilters(query, selectedFilters);
 
   state.filteredRows = state.allRows.filter((row) => {
     const matchesQuery = rowMatchesQuery(row, query);
