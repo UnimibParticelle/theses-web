@@ -64,6 +64,20 @@ body {
   animation: fade-up 400ms ease;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.35rem;
+}
+
+.site-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 .eyebrow {
   margin: 0;
   letter-spacing: 0.12em;
@@ -74,7 +88,7 @@ body {
 }
 
 h1 {
-  margin: 0.35rem 0 0;
+  margin: 0;
   font-family: "IBM Plex Serif", serif;
   font-size: clamp(1.8rem, 5vw, 3rem);
   line-height: 1.1;
@@ -316,5 +330,14 @@ button:hover {
 
   .controls-panel {
     position: static;
+  }
+
+  .title-row {
+    align-items: flex-start;
+  }
+
+  .site-logo {
+    width: 48px;
+    height: 48px;
   }
 }
