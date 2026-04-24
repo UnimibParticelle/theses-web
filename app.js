@@ -232,10 +232,10 @@ function pickByAlias(row, aliases) {
 }
 
 function populateFilters(rows) {
-  fillSelect(el.levelFilter, uniqueValues(rows.map((r) => r.level)));
-  fillSelect(el.topicFilter, uniqueValues(rows.map((r) => r.topic)));
-  fillSelect(el.professorFilter, uniqueValues(rows.flatMap((r) => splitProfessors(r.professor))));
-  fillSelect(el.experimentFilter, uniqueValues(rows.map((r) => r.experiment)));
+  setSelectOptions(el.levelFilter, uniqueValues(rows.map((r) => r.level)));
+  setSelectOptions(el.topicFilter, uniqueValues(rows.map((r) => r.topic)));
+  setSelectOptions(el.professorFilter, uniqueValues(rows.flatMap((r) => splitProfessors(r.professor))));
+  setSelectOptions(el.experimentFilter, uniqueValues(rows.map((r) => r.experiment)));
 }
 
 function fillSelect(select, values) {
@@ -251,26 +251,104 @@ function uniqueValues(values) {
   return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, "it"));
 }
 
+function setSelectOptions(select, values) {
+  const firstOption = select.options[0];
+  const placeholderText = firstOption ? firstOption.textContent : "Tutti";
+
+  select.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = placeholderText;
+  select.appendChild(placeholder);
+
+  fillSelect(select, values);
+}
+
+function rowMatchesQuery(row, query) {
+  if (!query) return true;
+  return [row.title, row.professor, row.topic, row.description, row.requirements]
+    .join(" ")
+    .toLowerCase()
+    .includes(query);
+}
+
+function matchesFilterValue(row, key, value) {
+  if (!value) return true;
+  if (key === "professor") {
+    return splitProfessors(row.professor).includes(value);
+  }
+  return row[key] === value;
+}
+
+function syncFilterOptions(query, selectedFilters) {
+  const descriptors = [
+    {
+      key: "level",
+      select: el.levelFilter,
+      valuesFromRows: (rows) => uniqueValues(rows.map((row) => row.level))
+    },
+    {
+      key: "topic",
+      select: el.topicFilter,
+      valuesFromRows: (rows) => uniqueValues(rows.map((row) => row.topic))
+    },
+    {
+      key: "professor",
+      select: el.professorFilter,
+      valuesFromRows: (rows) => uniqueValues(rows.flatMap((row) => splitProfessors(row.professor)))
+    },
+    {
+      key: "experiment",
+      select: el.experimentFilter,
+      valuesFromRows: (rows) => uniqueValues(rows.map((row) => row.experiment))
+    }
+  ];
+
+  descriptors.forEach(({ key, select, valuesFromRows }) => {
+    const compatibleRows = state.allRows.filter((row) => {
+      if (!rowMatchesQuery(row, query)) return false;
+
+      return Object.entries(selectedFilters).every(([filterKey, filterValue]) => {
+        if (filterKey === key) return true;
+        return matchesFilterValue(row, filterKey, filterValue);
+      });
+    });
+
+    const availableValues = valuesFromRows(compatibleRows);
+    setSelectOptions(select, availableValues);
+
+    if (selectedFilters[key] && availableValues.includes(selectedFilters[key])) {
+      select.value = selectedFilters[key];
+    } else {
+      select.value = "";
+    }
+  });
+
+  return {
+    level: el.levelFilter.value,
+    topic: el.topicFilter.value,
+    professor: el.professorFilter.value,
+    experiment: el.experimentFilter.value
+  };
+}
+
 function applyFilters() {
   const query = el.searchInput.value.trim().toLowerCase();
-  const selectedLevel = el.levelFilter.value;
-  const selectedTopic = el.topicFilter.value;
-  const selectedProfessor = el.professorFilter.value;
-  const selectedExperiment = el.experimentFilter.value;
+  const selectedFilters = syncFilterOptions(query, {
+    level: el.levelFilter.value,
+    topic: el.topicFilter.value,
+    professor: el.professorFilter.value,
+    experiment: el.experimentFilter.value
+  });
 
   state.filteredRows = state.allRows.filter((row) => {
-    const matchesQuery =
-      !query ||
-      [row.title, row.professor, row.topic, row.description, row.requirements]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+    const matchesQuery = rowMatchesQuery(row, query);
 
-    const matchesTopic = !selectedTopic || row.topic === selectedTopic;
-    const matchesProfessor =
-      !selectedProfessor || splitProfessors(row.professor).includes(selectedProfessor);
-    const matchesExperiment = !selectedExperiment || row.experiment === selectedExperiment;
-    const matchesLevel = !selectedLevel || row.level === selectedLevel;
+    const matchesTopic = matchesFilterValue(row, "topic", selectedFilters.topic);
+    const matchesProfessor = matchesFilterValue(row, "professor", selectedFilters.professor);
+    const matchesExperiment = matchesFilterValue(row, "experiment", selectedFilters.experiment);
+    const matchesLevel = matchesFilterValue(row, "level", selectedFilters.level);
 
     return matchesQuery && matchesTopic && matchesProfessor && matchesExperiment && matchesLevel;
   });
