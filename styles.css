@@ -62,6 +62,29 @@ body {
   margin: 0 auto;
   padding: 2.2rem 1.2rem 1rem;
   animation: fade-up 400ms ease;
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  top: 2.2rem;
+  right: 1.2rem;
+  width: auto;
+  margin-top: 0;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.lang-toggle:hover {
+  background: var(--ink);
+  color: #fff;
+  opacity: 1;
 }
 
 .title-row {

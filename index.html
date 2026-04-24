@@ -21,43 +21,44 @@
     <div class="bg-orb orb-b"></div>
 
     <header class="site-header">
-      <p class="eyebrow">UNIMIB Fisica delle Particelle</p>
+      <button id="langToggle" class="lang-toggle" type="button" aria-label="Switch language">EN</button>
+      <p class="eyebrow" data-i18n="eyebrow">UNIMIB Fisica delle Particelle</p>
       <div class="title-row">
         <img class="site-logo" src="./logo_unimib.png" alt="Logo UNIMIB" width="56" height="56" />
-        <h1>Proposte di tesi in Fisica delle Particelle</h1>
+        <h1 data-i18n="heading">Proposte di tesi in Fisica delle Particelle</h1>
       </div>
-      <p class="subtitle">Esplora, filtra e trova rapidamente il tema più adatto.</p>
+      <p class="subtitle" data-i18n="subtitle">Esplora, filtra e trova rapidamente il tema più adatto.</p>
     </header>
 
     <main class="layout">
       <aside class="panel controls-panel">
-        <h2>Filtri</h2>
+        <h2 data-i18n="filtersHeading">Filtri</h2>
 
-        <label for="searchInput">Cerca per titolo, docente o parole chiave</label>
-        <input id="searchInput" type="search" placeholder="Es. LHC, machine learning..." />
+        <label for="searchInput" data-i18n="searchLabel">Cerca per titolo, docente o parole chiave</label>
+        <input id="searchInput" type="search" placeholder="Es. LHC, machine learning..." data-i18n="searchPlaceholder" data-i18n-attr="placeholder" />
 
-        <label for="levelFilter">Livello</label>
+        <label for="levelFilter" data-i18n="levelLabel">Livello</label>
         <select id="levelFilter">
           <option value="">Tutti</option>
         </select>
 
-        <label for="topicFilter">Argomento</label>
+        <label for="topicFilter" data-i18n="topicLabel">Argomento</label>
         <select id="topicFilter">
           <option value="">Tutti</option>
         </select>
 
-        <label for="professorFilter">Docente</label>
+        <label for="professorFilter" data-i18n="professorLabel">Docente</label>
         <select id="professorFilter">
           <option value="">Tutti</option>
         </select>
 
-        <label for="experimentFilter">Esperimento</label>
+        <label for="experimentFilter" data-i18n="experimentLabel">Esperimento</label>
         <select id="experimentFilter">
           <option value="">Tutti</option>
         </select>
 
         <div class="actions-row">
-          <button id="clearFiltersBtn" type="button">Azzera filtri</button>
+          <button id="clearFiltersBtn" type="button" data-i18n="clearFilters">Azzera filtri</button>
           <span id="resultsCount" aria-live="polite"></span>
         </div>
       </aside>
@@ -68,7 +69,7 @@
       </section>
 
       <section class="panel detail-panel">
-        <div id="detailEmpty" class="detail-empty">Seleziona una proposta dalla lista.</div>
+        <div id="detailEmpty" class="detail-empty" data-i18n="detailEmpty">Seleziona una proposta dalla lista.</div>
         <article id="thesisDetail" class="detail hidden"></article>
       </section>
     </main>

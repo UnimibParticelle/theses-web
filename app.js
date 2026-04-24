@@ -2,7 +2,8 @@ const state = {
   allRows: [],
   filteredRows: [],
   selectedId: null,
-  experimentDescriptions: new Map()
+  experimentDescriptions: new Map(),
+  lang: new URLSearchParams(window.location.search).get("lang") || localStorage.getItem("lang") || "it"
 };
 
 const urlFilterParamAliases = {
@@ -31,6 +32,111 @@ const experimentSheetAliases = {
   description: ["descrizione", "description", "dettagli", "details", "info"]
 };
 
+const translations = {
+  it: {
+    pageTitle: "Proposte Tesi - Fisica delle Particelle UNIMIB",
+    eyebrow: "UNIMIB Fisica delle Particelle",
+    heading: "Proposte di tesi in Fisica delle Particelle",
+    subtitle: "Esplora, filtra e trova rapidamente il tema più adatto.",
+    filtersHeading: "Filtri",
+    searchLabel: "Cerca per titolo, docente o parole chiave",
+    searchPlaceholder: "Es. LHC, machine learning...",
+    levelLabel: "Livello",
+    topicLabel: "Argomento",
+    professorLabel: "Docente",
+    experimentLabel: "Esperimento",
+    allOption: "Tutti",
+    clearFilters: "Azzera filtri",
+    detailEmpty: "Seleziona una proposta dalla lista.",
+    loading: "Caricamento proposte...",
+    noConfig: "Configura config.js con l'URL CSV pubblico di Google Sheets per caricare le proposte.",
+    noRows: "Nessuna proposta trovata nel foglio.",
+    loadError: "Errore durante il caricamento del foglio. Controlla che il link CSV sia pubblico e valido.",
+    noResults: "Nessuna proposta trovata con i filtri attuali.",
+    resultsCount: (n) => `${n} risultat${n === 1 ? "o" : "i"}`,
+    detailProfessor: "Docente",
+    detailArea: "Area",
+    detailExperiment: "Esperimento",
+    detailDescription: "Descrizione",
+    detailRequirements: "Requisiti",
+    detailExperimentDesc: "Descrizione esperimento",
+    detailExperimentOpen: "Apri dettagli esperimento",
+    detailContact: "Contatto",
+    detailApplyLink: "Apri link candidatura",
+    detailNoDetails: "Nessun dettaglio aggiuntivo disponibile.",
+    langToggle: "EN"
+  },
+  en: {
+    pageTitle: "Thesis Proposals – Particle Physics UNIMIB",
+    eyebrow: "UNIMIB Particle Physics",
+    heading: "Thesis Proposals in Particle Physics",
+    subtitle: "Explore, filter and quickly find the most suitable topic.",
+    filtersHeading: "Filters",
+    searchLabel: "Search by title, supervisor or keywords",
+    searchPlaceholder: "E.g. LHC, machine learning...",
+    levelLabel: "Level",
+    topicLabel: "Topic",
+    professorLabel: "Supervisor",
+    experimentLabel: "Experiment",
+    allOption: "All",
+    clearFilters: "Clear filters",
+    detailEmpty: "Select a proposal from the list.",
+    loading: "Loading proposals...",
+    noConfig: "Configure config.js with the public CSV URL from Google Sheets to load proposals.",
+    noRows: "No proposals found in the sheet.",
+    loadError: "Error loading the sheet. Make sure the CSV link is public and valid.",
+    noResults: "No proposals found with the current filters.",
+    resultsCount: (n) => `${n} result${n === 1 ? "" : "s"}`,
+    detailProfessor: "Supervisor",
+    detailArea: "Area",
+    detailExperiment: "Experiment",
+    detailDescription: "Description",
+    detailRequirements: "Requirements",
+    detailExperimentDesc: "Experiment description",
+    detailExperimentOpen: "Open experiment details",
+    detailContact: "Contact",
+    detailApplyLink: "Open application link",
+    detailNoDetails: "No additional details available.",
+    langToggle: "IT"
+  }
+};
+
+function t(key, ...args) {
+  const val = (translations[state.lang] || translations.it)[key];
+  return typeof val === "function" ? val(...args) : (val ?? key);
+}
+
+function applyTranslations() {
+  document.documentElement.lang = state.lang;
+  document.title = t("pageTitle");
+
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    const key = node.dataset.i18n;
+    const attr = node.dataset.i18nAttr;
+    if (attr) {
+      node.setAttribute(attr, t(key));
+    } else {
+      node.textContent = t(key);
+    }
+  });
+
+  el.langToggle.textContent = t("langToggle");
+
+  [el.levelFilter, el.topicFilter, el.professorFilter, el.experimentFilter].forEach((sel) => {
+    if (sel.options[0] && sel.options[0].value === "") {
+      sel.options[0].textContent = t("allOption");
+    }
+  });
+
+  if (state.allRows.length > 0) {
+    renderList();
+    if (state.selectedId) {
+      selectThesis(state.selectedId);
+    }
+    el.resultsCount.textContent = t("resultsCount", state.filteredRows.length);
+  }
+}
+
 const el = {
   statusMessage: document.getElementById("statusMessage"),
   thesisList: document.getElementById("thesisList"),
@@ -42,24 +148,23 @@ const el = {
   professorFilter: document.getElementById("professorFilter"),
   experimentFilter: document.getElementById("experimentFilter"),
   clearFiltersBtn: document.getElementById("clearFiltersBtn"),
-  resultsCount: document.getElementById("resultsCount")
+  resultsCount: document.getElementById("resultsCount"),
+  langToggle: document.getElementById("langToggle")
 };
 
 init();
 
 async function init() {
   bindEvents();
+  applyTranslations();
 
   if (!window.SHEETS_CONFIG || !window.SHEETS_CONFIG.csvUrl) {
-    setStatus(
-      "Configura config.js con l'URL CSV pubblico di Google Sheets per caricare le proposte.",
-      true
-    );
+    setStatus(t("noConfig"), true);
     return;
   }
 
   try {
-    setStatus("Caricamento proposte...");
+    setStatus(t("loading"));
     const csv = await fetchCsv(window.SHEETS_CONFIG.csvUrl);
     const parsed = parseCsv(csv);
     state.allRows = normalizeRows(parsed);
@@ -75,7 +180,7 @@ async function init() {
     }
 
     if (state.allRows.length === 0) {
-      setStatus("Nessuna proposta trovata nel foglio.", true);
+      setStatus(t("noRows"), true);
       return;
     }
 
@@ -93,10 +198,7 @@ async function init() {
     setStatus("");
   } catch (error) {
     console.error(error);
-    setStatus(
-      "Errore durante il caricamento del foglio. Controlla che il link CSV sia pubblico e valido.",
-      true
-    );
+    setStatus(t("loadError"), true);
   }
 }
 
@@ -114,6 +216,12 @@ function bindEvents() {
     el.professorFilter.value = "";
     el.experimentFilter.value = "";
     applyFilters();
+  });
+
+  el.langToggle.addEventListener("click", () => {
+    state.lang = state.lang === "it" ? "en" : "it";
+    try { localStorage.setItem("lang", state.lang); } catch (_) {}
+    applyTranslations();
   });
 
   window.addEventListener("hashchange", () => {
@@ -261,14 +369,11 @@ function uniqueValues(values) {
 }
 
 function setSelectOptions(select, values) {
-  const firstOption = select.options[0];
-  const placeholderText = firstOption ? firstOption.textContent : "Tutti";
-
   select.innerHTML = "";
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = placeholderText;
+  placeholder.textContent = t("allOption");
   select.appendChild(placeholder);
 
   fillSelect(select, values);
@@ -427,7 +532,7 @@ function applyFilters() {
     highlightSelection();
   }
 
-  el.resultsCount.textContent = `${state.filteredRows.length} risultat${state.filteredRows.length === 1 ? "o" : "i"}`;
+  el.resultsCount.textContent = t("resultsCount", state.filteredRows.length);
 }
 
 function splitProfessors(value) {
@@ -440,7 +545,7 @@ function renderList() {
   if (state.filteredRows.length === 0) {
     const empty = document.createElement("li");
     empty.className = "status";
-    empty.textContent = "Nessuna proposta trovata con i filtri attuali.";
+    empty.textContent = t("noResults");
     el.thesisList.appendChild(empty);
     return;
   }
@@ -489,28 +594,28 @@ function selectThesis(id) {
   el.thesisDetail.classList.remove("hidden");
 
   const detailRows = [
-    detailRow("Docente", selected.professor),
-    detailRow("Area", selected.topic),
-    detailRow("Esperimento", selected.experiment),
-    detailRow("Descrizione", selected.description, { linkify: true }),
-    detailRow("Requisiti", selected.requirements),
+    detailRow(t("detailProfessor"), selected.professor),
+    detailRow(t("detailArea"), selected.topic),
+    detailRow(t("detailExperiment"), selected.experiment),
+    detailRow(t("detailDescription"), selected.description, { linkify: true }),
+    detailRow(t("detailRequirements"), selected.requirements),
     detailDisclosureRow(
-      "Descrizione esperimento",
+      t("detailExperimentDesc"),
       findExperimentDescription(selected.experiment),
-      "Apri dettagli esperimento"
+      t("detailExperimentOpen")
     ),
-    detailRow("Contatto", selected.email)
+    detailRow(t("detailContact"), selected.email)
   ]
     .filter(Boolean)
     .join("");
 
   const linkMarkup = selected.link
-    ? `<a class="link-btn" href="${escapeAttr(selected.link)}" target="_blank" rel="noreferrer">Apri link candidatura</a>`
+    ? `<a class="link-btn" href="${escapeAttr(selected.link)}" target="_blank" rel="noreferrer">${t("detailApplyLink")}</a>`
     : "";
 
   el.thesisDetail.innerHTML = `
     <h2>${escapeHtml(selected.title)}</h2>
-    <div class="detail-grid">${detailRows || "<p>Nessun dettaglio aggiuntivo disponibile.</p>"}</div>
+    <div class="detail-grid">${detailRows || `<p>${t("detailNoDetails")}</p>`}</div>
     ${linkMarkup}
   `;
 
