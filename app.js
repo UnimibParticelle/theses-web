@@ -349,7 +349,7 @@ function pickByAlias(row, aliases) {
 }
 
 function populateFilters(rows) {
-  setSelectOptions(el.levelFilter, uniqueValues(rows.map((r) => r.level)));
+  setSelectOptions(el.levelFilter, uniqueValues(rows.flatMap((r) => splitLevels(r.level))));
   setSelectOptions(el.topicFilter, uniqueValues(rows.map((r) => r.topic)));
   setSelectOptions(el.professorFilter, uniqueValues(rows.flatMap((r) => splitProfessors(r.professor))));
   setSelectOptions(el.experimentFilter, uniqueValues(rows.map((r) => r.experiment)));
@@ -404,7 +404,7 @@ function fuzzyMatchValue(raw, availableValues) {
 function applyFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
 
-  const allLevels      = uniqueValues(state.allRows.map((r) => r.level));
+  const allLevels      = uniqueValues(state.allRows.flatMap((r) => splitLevels(r.level)));
   const allTopics      = uniqueValues(state.allRows.map((r) => r.topic));
   const allProfessors  = uniqueValues(state.allRows.flatMap((r) => splitProfessors(r.professor)));
   const allExperiments = uniqueValues(state.allRows.map((r) => r.experiment));
@@ -448,6 +448,9 @@ function matchesFilterValue(row, key, value) {
   if (key === "professor") {
     return splitProfessors(row.professor).some((p) => normalizeText(p) === needle);
   }
+  if (key === "level") {
+    return splitLevels(row.level).some((level) => normalizeText(level) === needle);
+  }
   return normalizeText(row[key]) === needle;
 }
 
@@ -456,7 +459,7 @@ function syncFilterOptions(query, selectedFilters) {
     {
       key: "level",
       select: el.levelFilter,
-      valuesFromRows: (rows) => uniqueValues(rows.map((row) => row.level))
+      valuesFromRows: (rows) => uniqueValues(rows.flatMap((row) => splitLevels(row.level)))
     },
     {
       key: "topic",
@@ -536,6 +539,10 @@ function applyFilters() {
 }
 
 function splitProfessors(value) {
+  return splitCommaValues(value);
+}
+
+function splitLevels(value) {
   return splitCommaValues(value);
 }
 
